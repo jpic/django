@@ -1,12 +1,74 @@
 from __future__ import unicode_literals
 
+from django import forms
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models.fields.related import ManyToManyRel, RelatedField
 from django.utils.encoding import python_2_unicode_compatible
 
 
 class MyFileField(models.FileField):
     pass
+
+
+class MyThrough(models.Model):
+    pass
+
+
+class TaggableRel(ManyToManyRel):
+    def __init__(self, field):
+        self.field = field
+        self.through = MyThrough
+
+        self.related_name = None
+        self.limit_choices_to = {}
+        self.symmetrical = True
+        self.multiple = True
+        self.through_fields = None
+        self.model = MyThrough
+
+
+class MyManyToMany(RelatedField, models.Field):
+    many_to_many = True
+    many_to_one = False
+    one_to_many = False
+    one_to_one = False
+
+    def __init__(self):
+        models.Field.__init__(
+            self,
+            rel=TaggableRel(self)
+        )
+
+    def formfield(self, **kwargs):
+        return forms.ModelChoiceField(
+            queryset=Member.objects.exclude(band__in=self),
+            widget=forms.Radio,
+        )
+
+    def value_from_object(self, instance):
+        return
+
+    def save_form_data(self, instance, value):
+        return
+
+    def contribute_to_class(self, cls, name):
+        self.set_attributes_from_name(name)
+        self.model = cls
+        self.opts = cls._meta
+
+        cls._meta.add_field(self)
+        setattr(cls, name, self)
+        from django.db.models.fields.reverse_related import ManyToOneRel
+        self.remote_field = TaggableRel(self)
+
+        #self.remote_field.model = self.through._meta.get_field("tag").remote_field.model
+
+        #tagged_items = GenericRelation(self.through)
+        #tagged_items.contribute_to_class(cls, 'tagged_items')
+
+    def get_internal_type(self):
+        return 'ManyToManyField'
 
 
 @python_2_unicode_compatible
@@ -79,6 +141,7 @@ class Event(models.Model):
     description = models.TextField(blank=True)
     link = models.URLField(blank=True)
     min_age = models.IntegerField(blank=True, null=True)
+    tags = MyManyToMany()
 
 
 @python_2_unicode_compatible

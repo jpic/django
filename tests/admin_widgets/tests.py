@@ -109,6 +109,9 @@ class AdminFormfieldForDBFieldTests(SimpleTestCase):
     def test_ForeignKey(self):
         self.assertFormfield(models.Event, 'main_band', forms.Select)
 
+    def test_CustomField(self):
+        self.assertFormfield(models.Event, 'tags', forms.TextInput)
+
     def test_raw_id_ForeignKey(self):
         self.assertFormfield(models.Event, 'main_band', widgets.ForeignKeyRawIdWidget,
                              raw_id_fields=['main_band'])
