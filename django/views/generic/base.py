@@ -144,15 +144,14 @@ class TemplateResponseMixin:
 class TemplateView(TemplateResponseMixin, ContextMixin, View):
     """
     Render a template. Pass keyword arguments from the URLconf to the context.
+
+    Note that if you override the get() method, then you should also make sure
+    you call TemplateView.get() instead of render_to_response() to avoid
+    dealing with the context if you have complex class tree.
     """
-    def render_context_to_response(self, **kwargs):
-        """Do :py:meth:`get_context_data()` :py:meth:`render_to_response()`"""
+    def get(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         return self.render_to_response(context)
-
-    def get(self, request, *args, **kwargs):
-        """Do :py:meth:`render_context_to_response()`"""
-        return self.render_context_to_response(**kwargs)
 
 
 class RedirectView(View):
